@@ -1,4 +1,4 @@
-# 🚀 Go/No-Go Advisor — Launch Readiness AI App
+ 🚀 Go/No-Go Advisor — Launch Readiness AI App
 
 ## 🧠 Overview
 This project is a **Launch Go/No-Go Advisor** — an AI-powered system that determines whether conditions are favorable for launching the **Big Refueler** rocket into Low Earth Orbit (LEO).
