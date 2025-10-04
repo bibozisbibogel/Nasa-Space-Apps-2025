@@ -94,40 +94,98 @@ def generate_explanation(
     limits: Dict[str, Any],
     risk_score: int
 ) -> str:
-    """Generate human-readable explanation of the decision."""
-    issues = []
+    """Generate detailed human-readable explanation of the decision."""
+    sections = []
 
-    # Weather issues
-    if weather["wind_speed_kn"] > limits["max_wind_kn"] * 0.8:
-        issues.append(f"Wind speed {weather['wind_speed_kn']:.1f} kn approaching limit {limits['max_wind_kn']} kn")
+    # Always show weather conditions
+    weather_details = []
 
-    if weather["precipitation_mm"] > limits["max_precipitation_mm"] * 0.5:
-        issues.append(f"Precipitation {weather['precipitation_mm']:.1f} mm near limit {limits['max_precipitation_mm']} mm")
+    # Wind analysis
+    wind_ratio = weather["wind_speed_kn"] / limits["max_wind_kn"]
+    if wind_ratio >= 1:
+        weather_details.append(f"🌪️ Wind: {weather['wind_speed_kn']:.1f} kn (EXCEEDS limit of {limits['max_wind_kn']} kn)")
+    elif wind_ratio >= 0.8:
+        weather_details.append(f"💨 Wind: {weather['wind_speed_kn']:.1f} kn (approaching limit of {limits['max_wind_kn']} kn)")
+    else:
+        weather_details.append(f"✅ Wind: {weather['wind_speed_kn']:.1f} kn (nominal, limit {limits['max_wind_kn']} kn)")
 
-    if weather["cloud_ceiling_ft"] < limits["max_cloud_ceiling_ft"]:
-        issues.append(f"Cloud ceiling {weather['cloud_ceiling_ft']:.0f} ft below limit {limits['max_cloud_ceiling_ft']} ft")
+    # Precipitation analysis
+    precip_ratio = weather["precipitation_mm"] / limits["max_precipitation_mm"]
+    if precip_ratio >= 5:
+        weather_details.append(f"⛈️ Precipitation: {weather['precipitation_mm']:.1f} mm (CRITICAL - {precip_ratio:.1f}x over {limits['max_precipitation_mm']} mm limit)")
+    elif precip_ratio >= 2:
+        weather_details.append(f"🌧️ Precipitation: {weather['precipitation_mm']:.1f} mm (HIGH RISK - {precip_ratio:.1f}x over {limits['max_precipitation_mm']} mm limit)")
+    elif precip_ratio >= 1:
+        weather_details.append(f"🌦️ Precipitation: {weather['precipitation_mm']:.1f} mm (exceeds {limits['max_precipitation_mm']} mm limit)")
+    elif precip_ratio >= 0.7:
+        weather_details.append(f"🌂 Precipitation: {weather['precipitation_mm']:.1f} mm (approaching {limits['max_precipitation_mm']} mm limit)")
+    else:
+        weather_details.append(f"✅ Precipitation: {weather['precipitation_mm']:.1f} mm (nominal, limit {limits['max_precipitation_mm']} mm)")
 
-    if weather["temperature_c"] > limits["max_temp_c"] - 5:
-        issues.append(f"Temperature {weather['temperature_c']:.1f}°C approaching upper limit")
+    # Cloud ceiling analysis
+    if weather["cloud_ceiling_ft"] < 1000:
+        weather_details.append(f"☁️ Cloud Ceiling: {weather['cloud_ceiling_ft']:.0f} ft (VERY LOW - limit {limits['max_cloud_ceiling_ft']} ft)")
+    elif weather["cloud_ceiling_ft"] < 2000:
+        weather_details.append(f"🌥️ Cloud Ceiling: {weather['cloud_ceiling_ft']:.0f} ft (LOW - limit {limits['max_cloud_ceiling_ft']} ft)")
+    elif weather["cloud_ceiling_ft"] < limits["max_cloud_ceiling_ft"]:
+        weather_details.append(f"⛅ Cloud Ceiling: {weather['cloud_ceiling_ft']:.0f} ft (below {limits['max_cloud_ceiling_ft']} ft limit)")
+    else:
+        weather_details.append(f"✅ Cloud Ceiling: {weather['cloud_ceiling_ft']:.0f} ft (nominal, limit {limits['max_cloud_ceiling_ft']} ft)")
 
-    if weather["temperature_c"] < limits["min_temp_c"] + 5:
-        issues.append(f"Temperature {weather['temperature_c']:.1f}°C approaching lower limit")
+    # Temperature analysis
+    temp = weather["temperature_c"]
+    if temp > limits["max_temp_c"]:
+        weather_details.append(f"🌡️ Temperature: {temp:.1f}°C (EXCEEDS upper limit {limits['max_temp_c']}°C)")
+    elif temp < limits["min_temp_c"]:
+        weather_details.append(f"🥶 Temperature: {temp:.1f}°C (BELOW lower limit {limits['min_temp_c']}°C)")
+    elif temp > limits["max_temp_c"] - 5:
+        weather_details.append(f"🔥 Temperature: {temp:.1f}°C (approaching upper limit {limits['max_temp_c']}°C)")
+    elif temp < limits["min_temp_c"] + 5:
+        weather_details.append(f"❄️ Temperature: {temp:.1f}°C (approaching lower limit {limits['min_temp_c']}°C)")
+    else:
+        weather_details.append(f"✅ Temperature: {temp:.1f}°C (nominal, range {limits['min_temp_c']}-{limits['max_temp_c']}°C)")
 
-    # Space weather issues
-    if space_weather["kp_index"] >= 5:
-        issues.append(f"Elevated Kp index at {space_weather['kp_index']:.0f} (geomagnetic storm conditions)")
+    sections.append("WEATHER CONDITIONS:\n" + "\n".join(weather_details))
+
+    # Space weather analysis
+    space_details = []
+    kp = space_weather["kp_index"]
+    if kp >= 7:
+        space_details.append(f"⚠️ Kp Index: {kp:.0f} (SEVERE geomagnetic storm)")
+    elif kp >= 5:
+        space_details.append(f"🌩️ Kp Index: {kp:.0f} (Geomagnetic storm active)")
+    elif kp >= 3:
+        space_details.append(f"⚡ Kp Index: {kp:.0f} (Unsettled conditions)")
+    else:
+        space_details.append(f"✅ Kp Index: {kp:.0f} (Quiet)")
 
     if space_weather["has_solar_storm"]:
-        issues.append("Active solar storm detected")
+        space_details.append(f"☀️ Solar Activity: ACTIVE STORM DETECTED")
+    else:
+        space_details.append(f"✅ Solar Activity: Normal")
 
-    # Conjunction issues
+    sections.append("\nSPACE WEATHER:\n" + "\n".join(space_details))
+
+    # Conjunction/debris analysis
     if conjunction["has_high_risk"]:
-        issues.append("High debris conjunction risk detected")
+        sections.append("\n🛰️ DEBRIS RISK: HIGH - Close approach detected")
+    elif conjunction["close_approaches"] > 0:
+        sections.append(f"\n🛰️ DEBRIS RISK: {conjunction['close_approaches']} tracked object(s) nearby")
+    else:
+        sections.append("\n✅ DEBRIS RISK: Clear")
 
-    if not issues:
-        return "All parameters within acceptable limits for launch"
+    # Overall assessment
+    verdict_text = ""
+    if risk_score >= 70:
+        verdict_text = f"\n\n❌ RECOMMENDATION: NO-GO (Risk Score: {risk_score}/100)\nConditions are unsafe for launch. Multiple critical parameters exceeded."
+    elif risk_score >= 40:
+        verdict_text = f"\n\n⚠️ RECOMMENDATION: MARGINAL (Risk Score: {risk_score}/100)\nSome parameters of concern. Monitor closely and proceed with caution."
+    else:
+        verdict_text = f"\n\n✅ RECOMMENDATION: GO (Risk Score: {risk_score}/100)\nAll parameters within acceptable limits for launch."
 
-    return "; ".join(issues)
+    sections.append(verdict_text)
+
+    return "\n".join(sections)
 
 
 def get_rule_citations(

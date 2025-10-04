@@ -139,7 +139,7 @@ export default function Home() {
 
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-2">Analysis</h3>
-              <p className="text-gray-300">{result.why}</p>
+              <pre className="text-gray-300 whitespace-pre-wrap font-sans text-sm leading-relaxed">{result.why}</pre>
             </div>
 
             <div>
