@@ -4,14 +4,15 @@
 This project is a **Launch Go/No-Go Advisor** — an AI-powered system that determines whether conditions are favorable for launching the **Big Refueler** rocket into Low Earth Orbit (LEO).
 
 It uses:
-- **Meteomatics Weather API** → to get real-time and forecast weather data (wind, clouds, precipitation, temperature).  
-- **NOAA SWPC API** → to check **space weather conditions** (solar storms, Kp index).  
-- **(Optional)** Space-Track API → to check for **debris/conjunction (COLA)** risks.  
+- **Meteomatics Weather API** → to get real-time and forecast weather data (wind, clouds, precipitation, temperature).
+- **NOAA SWPC API** → to check **space weather conditions** (solar storms, Kp index).
+- **Space-Track API** → to check for **debris/conjunction (COLA)** risks.
 
-The app answers questions like:
-> “Hey, can I launch the rocket at 2025-10-05 20:00 UTC from Kennedy Space Center?”
+The app provides a simple interface where you:
+1. **Select a launch site** from the dropdown (e.g., Kennedy Space Center, Vandenberg SFB)
+2. **Pick a date and time** using the calendar picker
 
-and responds with:
+The system then analyzes the conditions and responds with:
 ```json
 {
   "verdict": "MARGINAL",
