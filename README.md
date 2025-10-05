@@ -121,4 +121,12 @@ npm install
 npm run dev
 ```
 
+## Commands to run the Backend and Frontend for the app - same terminal
+
+# Start backend in background
+cd backend && source venv/bin/activate && python api.py &
+
+# Then start frontend
+cd frontend && npm run dev
+
 Open http://localhost:3000 in your browser!
