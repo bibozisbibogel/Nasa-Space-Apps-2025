@@ -1,4 +1,6 @@
+# .env file
 
+.env
 
 # Python
 __pycache__/
